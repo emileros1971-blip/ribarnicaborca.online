@@ -1,0 +1,67 @@
+name: Sync final static site
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sync-site.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download verified production site
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://id-preview--b921800d-7293-4542-9062-8510a6aaf043.lovable.app"
+          mkdir -p images
+          curl -fL "$BASE/index.html" -o index.html
+          curl -fL "$BASE/favicon.ico" -o favicon.ico
+          curl -fL "$BASE/images/hero.jpg" -o images/hero.jpg
+          curl -fL "$BASE/images/seafood.png" -o images/seafood.png
+          curl -fL "$BASE/images/hot.jpg" -o images/hot.jpg
+          curl -fL "$BASE/images/fillets.jpg" -o images/fillets.jpg
+          curl -fL "$BASE/robots.txt" -o robots.txt
+          curl -fL "$BASE/sitemap.xml" -o sitemap.xml
+          printf 'ribarnicaborca.online\n' > CNAME
+          touch .nojekyll
+
+      - name: Verify production files
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'https://ribarnicaborca.online/' index.html
+          grep -q 'tel:+381611030053' index.html
+          grep -q 'https://wa.me/381611030053' index.html
+          grep -q 'https://www.instagram.com/mata_laza_ribarnica/' index.html
+          grep -q 'Milana Toplice 2a' index.html
+          test "$(grep -o '<h1' index.html | wc -l)" -eq 1
+          test -s favicon.ico
+          test -s images/hero.jpg
+          test -s images/seafood.png
+          test -s images/hot.jpg
+          test -s images/fillets.jpg
+          grep -q 'https://ribarnicaborca.online/sitemap.xml' robots.txt
+          grep -q '<loc>https://ribarnicaborca.online/</loc>' sitemap.xml
+
+      - name: Commit final website
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html favicon.ico images robots.txt sitemap.xml CNAME .nojekyll
+          if git diff --cached --quiet; then
+            echo "No site changes to commit."
+          else
+            git commit -m "Deploy final Ribarnica Borča website"
+            git push
+          fi
