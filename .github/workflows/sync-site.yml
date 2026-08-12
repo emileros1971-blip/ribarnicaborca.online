@@ -25,10 +25,10 @@ jobs:
           mkdir -p images
           curl -fL "$BASE/index.html" -o index.html
           curl -fL "$BASE/favicon.ico" -o favicon.ico
-          curl -fL "$BASE/images/hero.jpg" -o images/hero.jpg
-          curl -fL "$BASE/images/seafood.png" -o images/seafood.png
-          curl -fL "$BASE/images/hot.jpg" -o images/hot.jpg
-          curl -fL "$BASE/images/fillets.jpg" -o images/fillets.jpg
+          curl -fL "$BASE/hero.jpg" -o images/hero.jpg
+          curl -fL "$BASE/seafood.png" -o images/seafood.png
+          curl -fL "$BASE/hot.jpg" -o images/hot.jpg
+          curl -fL "$BASE/fillets.jpg" -o images/fillets.jpg
           curl -fL "$BASE/robots.txt" -o robots.txt
           curl -fL "$BASE/sitemap.xml" -o sitemap.xml
           printf 'ribarnicaborca.online\n' > CNAME
@@ -49,6 +49,10 @@ jobs:
           test -s images/seafood.png
           test -s images/hot.jpg
           test -s images/fillets.jpg
+          file images/hero.jpg | grep -qi 'JPEG image data'
+          file images/hot.jpg | grep -qi 'JPEG image data'
+          file images/fillets.jpg | grep -qi 'JPEG image data'
+          file images/seafood.png | grep -qi 'PNG image data'
           grep -q 'https://ribarnicaborca.online/sitemap.xml' robots.txt
           grep -q '<loc>https://ribarnicaborca.online/</loc>' sitemap.xml
 
