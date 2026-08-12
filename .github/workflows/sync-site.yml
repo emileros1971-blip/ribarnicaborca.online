@@ -17,20 +17,57 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Download verified production site
+      - name: Download production HTML and assets
         shell: bash
         run: |
           set -euo pipefail
           BASE="https://id-preview--b921800d-7293-4542-9062-8510a6aaf043.lovable.app"
           mkdir -p images
+
+          # The production HTML and favicon come from the verified Lovable project.
           curl -fL "$BASE/index.html" -o index.html
           curl -fL "$BASE/favicon.ico" -o favicon.ico
-          curl -fL "$BASE/hero.jpg" -o images/hero.jpg
-          curl -fL "$BASE/seafood.png" -o images/seafood.png
-          curl -fL "$BASE/hot.jpg" -o images/hot.jpg
-          curl -fL "$BASE/fillets.jpg" -o images/fillets.jpg
-          curl -fL "$BASE/robots.txt" -o robots.txt
-          curl -fL "$BASE/sitemap.xml" -o sitemap.xml
+
+          # Store reliable, non-AI seafood photography locally in this repository.
+          curl -fL 'https://images.unsplash.com/photo-1703756292793-287f082d3a45?auto=format&fit=crop&w=1600&q=80' -o images/hero.jpg
+          curl -fL 'https://images.unsplash.com/photo-1703756292793-287f082d3a45?auto=format&fit=crop&w=1000&q=70' -o images/seafood.jpg
+          curl -fL 'https://images.unsplash.com/photo-1518732751612-2c0787ff5684?auto=format&fit=crop&w=1400&q=80' -o images/hot.jpg
+          curl -fL 'https://images.unsplash.com/photo-1738850305725-405b09aafb51?auto=format&fit=crop&w=1200&q=75' -o images/fillets.jpg
+
+          # Point the decorative seafood image at the local JPEG.
+          sed -i 's#images/seafood.png#images/seafood.jpg#g' index.html
+
+          cat > robots.txt <<'EOF'
+          User-agent: Googlebot
+          Allow: /
+
+          User-agent: Bingbot
+          Allow: /
+
+          User-agent: Twitterbot
+          Allow: /
+
+          User-agent: facebookexternalhit
+          Allow: /
+
+          User-agent: *
+          Allow: /
+
+          Sitemap: https://ribarnicaborca.online/sitemap.xml
+          EOF
+
+          cat > sitemap.xml <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+            <url>
+              <loc>https://ribarnicaborca.online/</loc>
+              <lastmod>2026-08-12</lastmod>
+              <changefreq>weekly</changefreq>
+              <priority>1.0</priority>
+            </url>
+          </urlset>
+          EOF
+
           printf 'ribarnicaborca.online\n' > CNAME
           touch .nojekyll
 
@@ -43,16 +80,17 @@ jobs:
           grep -q 'https://wa.me/381611030053' index.html
           grep -q 'https://www.instagram.com/mata_laza_ribarnica/' index.html
           grep -q 'Milana Toplice 2a' index.html
+          grep -q 'images/seafood.jpg' index.html
           test "$(grep -o '<h1' index.html | wc -l)" -eq 1
           test -s favicon.ico
           test -s images/hero.jpg
-          test -s images/seafood.png
+          test -s images/seafood.jpg
           test -s images/hot.jpg
           test -s images/fillets.jpg
           file images/hero.jpg | grep -qi 'JPEG image data'
+          file images/seafood.jpg | grep -qi 'JPEG image data'
           file images/hot.jpg | grep -qi 'JPEG image data'
           file images/fillets.jpg | grep -qi 'JPEG image data'
-          file images/seafood.png | grep -qi 'PNG image data'
           grep -q 'https://ribarnicaborca.online/sitemap.xml' robots.txt
           grep -q '<loc>https://ribarnicaborca.online/</loc>' sitemap.xml
 
